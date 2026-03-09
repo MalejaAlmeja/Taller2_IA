@@ -65,13 +65,20 @@ class MinimaxAgent(MultiAgentSearchAgent):
         - The next agent is (agent_index + 1) % num_agents. Depth decreases after all agents have moved (full ply).
         - Return the ACTION (not the value) that maximizes the minimax value for the drone.
         """
-        # Quiero ver la mejor opcion de un dron
-        self.depth = self.depth * state.get_num_agents()  # queheto
+        turns = self.depth
+        num_agents = state.get_num_agents()
+        agent_index = 0  # start with the drone
+        # i'll decrease the turns when all agents have moved
+        
+        next_agent = (agent_index + 1) % num_agents
+
+        
         best_action = None
         best_value = float("-inf")
         for action in state.get_legal_actions(self.index):
             successor = state.generate_successor(self.index, action)
             value = self._minimax(successor, 1, self.depth - 1)  # aca toca hacer como los siguientes hunters, idk. como dice el encuncaido
+            #weve gotta create a minimax function to make a recursion :P
             if value > best_value:
                 best_value = value
                 best_action = action
