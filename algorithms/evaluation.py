@@ -81,10 +81,10 @@ def evaluation_function(state: GameState) -> float:
         _, path = dijkstra(layout, hunter, drone_pos)
         safe_positions.update(path)
 
-    for x in range(len(layout[0])):
-        for y in range(len(layout)):
+    for x in range(layout.width):
+        for y in range(layout.height):
             pos = (x, y)
-            if pos not in safe_positions and layout[y][x] != '%':  # Not impossible (%)
+            if pos not in safe_positions and layout.get_terrain(x,y) != '%':  # Not impossible (%)
                 safe_dist = bfs_distance(layout, drone_pos, pos, hunter_restricted=False)
                 if safe_dist != float('inf'):
                     safe_distances.append(safe_dist)
