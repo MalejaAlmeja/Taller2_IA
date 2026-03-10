@@ -32,6 +32,7 @@ class GameState:
         self._win: bool = False
         self._lose: bool = False
         self._num_agents: int = 0
+        self._visited_positions: dict[tuple[int, int], int] = {}
         self._init_from_layout(layout)
 
     def _init_from_layout(self, layout: DroneLayout) -> None:
@@ -48,6 +49,9 @@ class GameState:
         self._score = 0
         self._win = False
         self._lose = False
+        self._visited_positions = {}
+        if self._drone_position is not None:
+            self._visited_positions[self._drone_position] = 1
 
     def deep_copy(self) -> GameState:
         """
@@ -62,6 +66,7 @@ class GameState:
         state._win = self._win
         state._lose = self._lose
         state._num_agents = self._num_agents
+        state._visited_positions = dict(self._visited_positions)
         return state
 
     def get_drone_position(self) -> tuple[int, int] | None:
@@ -143,6 +148,9 @@ class GameState:
         assert self._drone_position is not None
         new_pos = Actions.get_successor(self._drone_position, action)
         self._drone_position = (int(new_pos[0]), int(new_pos[1]))
+        self._visited_positions[self._drone_position] = (
+            self._visited_positions.get(self._drone_position, 0) + 1
+        )
         self._score += TIME_PENALTY
 
         if self._drone_position in self._pending_deliveries:
@@ -200,6 +208,12 @@ class GameState:
         Get the current score of the game.
         """
         return self._score
+
+    def get_visited_count(self, pos: tuple[int, int]) -> int:
+        """
+        Get the number of times the drone has visited the given position.
+        """
+        return self._visited_positions.get(pos, 0)
 
     def get_walls(self) -> Grid | None:
         """

@@ -56,6 +56,8 @@ def evaluation_function(state: GameState) -> float:
     safe_positions = set()
     safe_distances = []
 
+    
+
     # 1. BFS distance from drone to nearest delivery point
     pending_deliveries = state.get_pending_deliveries()
     
@@ -103,7 +105,9 @@ def evaluation_function(state: GameState) -> float:
         if drone_to_delivery < hunter_to_delivery:
             score += 20 / (1 + drone_to_delivery)  # Closer urgent deliveries increase score
     
-    # 7. Revisit penalty to prevent cycles 
-    # TODO: idk what to do here, i thought of changing GameState to add a list of visited thingies but idk
+    # 7. Adding a revisit penalty can help prevent the drone from getting stuck in cycles.
+    visit_count = state.get_visited_count(drone_pos)
+    if visit_count > 1:
+        score -= 5 * (visit_count - 1)  # each extra visit costs 5 points
 
     return score
