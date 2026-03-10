@@ -65,24 +65,43 @@ class MinimaxAgent(MultiAgentSearchAgent):
         - The next agent is (agent_index + 1) % num_agents. Depth decreases after all agents have moved (full ply).
         - Return the ACTION (not the value) that maximizes the minimax value for the drone.
         """
-        turns = self.depth
-        num_agents = state.get_num_agents()
-        agent_index = 0  # start with the drone
-        # i'll decrease the turns when all agents have moved
-        
-        next_agent = (agent_index + 1) % num_agents
-
-        
         best_action = None
         best_value = float("-inf")
+
         for action in state.get_legal_actions(self.index):
             successor = state.generate_successor(self.index, action)
-            value = self._minimax(successor, 1, self.depth - 1)  # aca toca hacer como los siguientes hunters, idk. como dice el encuncaido
-            #weve gotta create a minimax function to make a recursion :P
+            value = self._minimax(successor, 1, self.depth - 1)
             if value > best_value:
                 best_value = value
                 best_action = action
         return best_action
+
+    def _minimax(self, state: GameState, agent_index: int, depth: int) -> float:
+        if state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+        if agent_index == 0 and depth == 0:
+            return self.evaluation_function(state)
+
+        num_agents = state.get_num_agents()
+        legal_actions = state.get_legal_actions(agent_index)
+
+        if not legal_actions:
+            return self.evaluation_function(state)
+
+        if agent_index == 0:
+            best = float("-inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                best = max(best, self._minimax(successor, 1, depth - 1))
+            return best
+        else:
+            next_agent = (agent_index + 1) % num_agents
+            best = float("inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                best = min(best, self._minimax(successor, next_agent, depth))
+            return best
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -106,8 +125,58 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         - Update beta at MIN nodes: beta = min(beta, value).
         - Pass alpha and beta through the recursive calls.
         """
-        # TODO: Implement your code here (BONUS)
-        return None
+        best_action = None
+        best_value = float("-inf")
+        alpha = float("-inf")
+        beta = float("inf")
+
+        for action in state.get_legal_actions(self.index):
+            successor = state.generate_successor(self.index, action)
+            value = self._alphabeta(successor, 1, self.depth - 1, alpha, beta)
+
+            if value > best_value:
+                best_value = value
+                best_action = action
+
+            alpha = max(alpha, best_value)
+
+        return best_action
+
+    def _alphabeta(self, state, agent_index, depth, alpha, beta):
+        if state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+        if agent_index == 0 and depth == 0:
+            return self.evaluation_function(state)
+
+        num_agents = state.get_num_agents()
+        legal_actions = state.get_legal_actions(agent_index)
+
+        if not legal_actions:
+            return self.evaluation_function(state)
+
+        if agent_index == 0:
+            value = float("-inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                value = max(value, self._alphabeta(successor, 1, depth - 1, alpha, beta))
+                alpha = max(alpha, value)
+
+                if value > beta:
+                    break
+            return value
+        else:
+            next_agent = (agent_index + 1) % num_agents
+            value = float("inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                value = min(value, self._alphabeta(successor, next_agent, depth, alpha, beta))
+                beta = min(beta, value)
+
+                if value < alpha:
+                    break
+            return value
+    
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
