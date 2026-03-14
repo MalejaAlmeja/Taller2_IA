@@ -208,5 +208,56 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         - Do NOT prune in expectimax (unlike alpha-beta).
         - self.prob is set via the constructor argument prob.
         """
-        # TODO: Implement your code here
-        return None
+        best_action = None
+        best_value = float("-inf")
+        
+        #Prueba cada acción del dron y evalúa con expectimax
+        for action in state.get_legal_actions(self.index): 
+            successor = state.generate_successor(self.index, action)
+            value = self._expectimax(successor, 1, self.depth - 1)
+            #Guarda la mejor acción 
+            if value > best_value:
+                best_value = value
+                best_action = action
+
+        return best_action
+
+    def _expectimax(self, state: GameState, agent_index: int, depth: int) -> float:
+
+        #Casos base (Iguales a los de arriba)
+        if state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+        if agent_index == 0 and depth == 0:
+            return self.evaluation_function(state)
+
+        num_agents = state.get_num_agents()
+        legal_actions = state.get_legal_actions(agent_index)
+
+        if not legal_actions:
+            return self.evaluation_function(state)
+
+        # Nodo MAX: turno del dron (igual a Minimax)
+        if agent_index == 0:
+            best = float("-inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                best = max(best, self._expectimax(successor, 1, depth - 1))
+            return best
+
+        # Nodo de azar: turno del cazador con modelo mixto
+        else:
+            next_agent = (agent_index + 1) % num_agents #Si hay 2 cazadores hay que alternar
+            child_values = []
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                child_values.append(self._expectimax(successor, next_agent, depth))
+            #Evalúa todos los movimientos del cazador, se miran todos porque se necesita para el promedio
+
+            worst_case = min(child_values) # cazador juega perfecto
+            average    = sum(child_values) / len(child_values) # cazador juega al azar
+
+            # Formula de probabilidad
+            return (1 - self.prob) * worst_case + self.prob * average
+        
+

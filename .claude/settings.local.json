@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/nelso/AppData/Local/Programs/Python/Python313/Scripts//**)",
+      "Read(//c/Users/nelso/AppData/Local/Programs/Python/Python313/Lib//**)",
+      "Read(//c/Users/nelso/AppData/Local/Programs/Python/Launcher//**)",
+      "Bash(\"/c/Users/nelso/AppData/Local/Programs/Python/Launcher/py.exe\" --list)",
+      "Bash(py --list)",
+      "Bash(py -3.13 --version 2>&1; py -3.13 -c \"import sys; print\\(sys.executable\\)\" 2>&1)",
+      "Bash(\"/c/Users/nelso/AppData/Local/Programs/Python/Launcher/py.exe\" -3.13 --version 2>&1; \"/c/Users/nelso/AppData/Local/Programs/Python/Launcher/py.exe\" -3.13 -c \"import sys; print\\(sys.executable\\)\" 2>&1)",
+      "Read(//c/Python313//**)",
+      "Bash(\"/c/Python313/python.exe\" --version)",
+      "Bash(\"/c/Python313/python.exe\" -m venv \"/c/Users/nelso/Documents/IA/Taller2_IA/.venv\" 2>&1)",
+      "Bash(ls \"/c/Users/nelso/Documents/IA/Taller2_IA/.venv/\" 2>&1; \"/c/Users/nelso/Documents/IA/Taller2_IA/.venv/Scripts/python.exe\" --version 2>&1)"
+    ]
+  }
+}
