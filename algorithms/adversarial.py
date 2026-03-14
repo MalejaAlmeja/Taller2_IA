@@ -186,16 +186,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         alpha = float("-inf")
         beta = float("inf")
  
-        # Move ordering: explorar primero las acciones que parecen más prometedoras
-        # según la función de evaluación shallow. Mejora la poda alpha-beta significativamente.
-        actions = state.get_legal_actions(self.index)
-        actions_sorted = sorted(
-            actions,
-            key=lambda a: self.evaluation_function(state.generate_successor(self.index, a)),
-            reverse=True  # mejores primero para MAX
-        )
- 
-        for action in actions_sorted:
+        for action in state.get_legal_actions(self.index):
             successor = state.generate_successor(self.index, action)
             value = self._alphabeta(successor, 1, self.depth - 1, alpha, beta)
  
@@ -204,10 +195,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 best_action = action
  
             alpha = max(alpha, best_value)
- 
-            # Early termination: si encontramos victoria garantizada no seguimos
-            if best_value >= 1000:
-                break
  
         return best_action
  
@@ -225,12 +212,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             return self.evaluation_function(state)
  
         if agent_index == 0:
-            # Move ordering en nodos MAX internos también
-            legal_actions = sorted(
-                legal_actions,
-                key=lambda a: self.evaluation_function(state.generate_successor(agent_index, a)),
-                reverse=True
-            )
             value = float("-inf")
             for action in legal_actions:
                 successor = state.generate_successor(agent_index, action)
@@ -241,12 +222,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             return value
         else:
             next_agent = (agent_index + 1) % num_agents
-            # Move ordering en nodos MIN: peores para el dron primero
-            legal_actions = sorted(
-                legal_actions,
-                key=lambda a: self.evaluation_function(state.generate_successor(agent_index, a)),
-                reverse=False
-            )
             value = float("inf")
             for action in legal_actions:
                 successor = state.generate_successor(agent_index, action)
