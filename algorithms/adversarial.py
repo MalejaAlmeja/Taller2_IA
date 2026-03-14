@@ -67,28 +67,31 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         best_action = None
         best_value = float("-inf")
-
+ 
         for action in state.get_legal_actions(self.index):
             successor = state.generate_successor(self.index, action)
             value = self._minimax(successor, 1, self.depth - 1)
             if value > best_value:
                 best_value = value
                 best_action = action
+            # Se agrega esta parte con IA como parte de optimización para victoria garantizada
+            if best_value >= 1000:
+                break
         return best_action
-
+ 
     def _minimax(self, state: GameState, agent_index: int, depth: int) -> float:
         if state.is_win() or state.is_lose():
             return self.evaluation_function(state)
-
+ 
         if agent_index == 0 and depth == 0:
             return self.evaluation_function(state)
-
+ 
         num_agents = state.get_num_agents()
         legal_actions = state.get_legal_actions(agent_index)
-
+ 
         if not legal_actions:
             return self.evaluation_function(state)
-
+ 
         if agent_index == 0:
             best = float("-inf")
             for action in legal_actions:
@@ -102,8 +105,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 successor = state.generate_successor(agent_index, action)
                 best = min(best, self._minimax(successor, next_agent, depth))
             return best
-
-
+    
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Alpha-Beta pruning agent. Same as Minimax but with alpha-beta pruning.
@@ -125,6 +127,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         - Update beta at MIN nodes: beta = min(beta, value).
         - Pass alpha and beta through the recursive calls.
         """
+        """
+        Primera Version sin IA: 
         best_action = None
         best_value = float("-inf")
         alpha = float("-inf")
@@ -176,6 +180,82 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 if value < alpha:
                     break
             return value
+    """
+        best_action = None
+        best_value = float("-inf")
+        alpha = float("-inf")
+        beta = float("inf")
+ 
+        # Move ordering: explorar primero las acciones que parecen más prometedoras
+        # según la función de evaluación shallow. Mejora la poda alpha-beta significativamente.
+        actions = state.get_legal_actions(self.index)
+        actions_sorted = sorted(
+            actions,
+            key=lambda a: self.evaluation_function(state.generate_successor(self.index, a)),
+            reverse=True  # mejores primero para MAX
+        )
+ 
+        for action in actions_sorted:
+            successor = state.generate_successor(self.index, action)
+            value = self._alphabeta(successor, 1, self.depth - 1, alpha, beta)
+ 
+            if value > best_value:
+                best_value = value
+                best_action = action
+ 
+            alpha = max(alpha, best_value)
+ 
+            # Early termination: si encontramos victoria garantizada no seguimos
+            if best_value >= 1000:
+                break
+ 
+        return best_action
+ 
+    def _alphabeta(self, state, agent_index, depth, alpha, beta):
+        if state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+ 
+        if agent_index == 0 and depth == 0:
+            return self.evaluation_function(state)
+ 
+        num_agents = state.get_num_agents()
+        legal_actions = state.get_legal_actions(agent_index)
+ 
+        if not legal_actions:
+            return self.evaluation_function(state)
+ 
+        if agent_index == 0:
+            # Move ordering en nodos MAX internos también
+            legal_actions = sorted(
+                legal_actions,
+                key=lambda a: self.evaluation_function(state.generate_successor(agent_index, a)),
+                reverse=True
+            )
+            value = float("-inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                value = max(value, self._alphabeta(successor, 1, depth - 1, alpha, beta))
+                alpha = max(alpha, value)
+                if value > beta:
+                    break
+            return value
+        else:
+            next_agent = (agent_index + 1) % num_agents
+            # Move ordering en nodos MIN: peores para el dron primero
+            legal_actions = sorted(
+                legal_actions,
+                key=lambda a: self.evaluation_function(state.generate_successor(agent_index, a)),
+                reverse=False
+            )
+            value = float("inf")
+            for action in legal_actions:
+                successor = state.generate_successor(agent_index, action)
+                value = min(value, self._alphabeta(successor, next_agent, depth, alpha, beta))
+                beta = min(beta, value)
+                if value < alpha:
+                    break
+            return value
+
     
 
 

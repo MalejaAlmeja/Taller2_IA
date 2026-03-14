@@ -41,7 +41,7 @@ def evaluation_function(state: GameState) -> float:
     - Consider edge cases: no pending deliveries, no hunters nearby.
     - A good evaluation function balances delivery progress with hunter avoidance.
     """
-    
+    """
     score = 0
     if state.is_win():
         return 1000
@@ -110,4 +110,76 @@ def evaluation_function(state: GameState) -> float:
     if visit_count > 1:
         score -= 5 * (visit_count - 1)  # each extra visit costs 5 points
 
+    return score
+    """
+
+    score = 0
+    if state.is_win():
+        return 1000
+    elif state.is_lose():
+        return -1000
+ 
+    drone_pos = state.get_drone_position()
+    layout = state.get_layout()
+    pending_deliveries = state.get_pending_deliveries()
+    hunters = state.get_hunter_positions()
+ 
+    # 1. BFS distance from drone to nearest delivery point
+    if pending_deliveries:
+        delivery_distances = [
+            bfs_distance(layout, drone_pos, delivery, hunter_restricted=False)
+            for delivery in pending_deliveries
+        ]
+        min_delivery_distance = min(delivery_distances)
+        score += 10 / (1 + min_delivery_distance)
+ 
+    # 2. BFS distance from each hunter to the drone
+    if hunters:
+        hunter_distances = [
+            bfs_distance(layout, drone_pos, hunter, hunter_restricted=True)
+            for hunter in hunters
+        ]
+        min_hunter_distance = min(hunter_distances)
+        score -= 10 / (1 + min_hunter_distance)
+ 
+    # 3. BFS distance to a safe position (not in path of any hunter)
+    safe_positions = set()
+    for hunter in hunters:
+        _, path = dijkstra(layout, hunter, drone_pos)
+        safe_positions.update(path)
+ 
+    safe_distances = []
+    for x in range(layout.width):
+        for y in range(layout.height):
+            pos = (x, y)
+            if pos not in safe_positions and layout.get_terrain(x, y) != '%':
+                safe_dist = bfs_distance(layout, drone_pos, pos, hunter_restricted=False)
+                if safe_dist != float('inf'):
+                    safe_distances.append(safe_dist)
+    if safe_distances:
+        min_safe_distance = min(safe_distances)
+        score += 5 / (1 + min_safe_distance)
+ 
+    # 4. Number of pending deliveries
+    score -= len(pending_deliveries)
+ 
+    # 5. Current score
+    score += state.get_score()
+ 
+    # 6. Delivery urgency — FIX: guard para hunters vacío
+    if pending_deliveries and hunters:
+        for delivery in pending_deliveries:
+            drone_to_delivery = bfs_distance(layout, drone_pos, delivery, hunter_restricted=False)
+            hunter_to_delivery = min(
+                bfs_distance(layout, hunter, delivery, hunter_restricted=True)
+                for hunter in hunters
+            )
+            if drone_to_delivery < hunter_to_delivery:
+                score += 20 / (1 + drone_to_delivery)
+ 
+    # 7. Revisit penalty
+    visit_count = state.get_visited_count(drone_pos)
+    if visit_count > 1:
+        score -= 5 * (visit_count - 1)
+ 
     return score
